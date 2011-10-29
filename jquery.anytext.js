@@ -83,19 +83,23 @@
 	};
 	$.fn.anyText.active = true;
 
-	function domPath(el) {
+	function domPath(el, lang) {
+		lang || (lang = 'xpath')
+		inc = 'xpath' == lang ? 1 : 0;
 		hierarchy = [];
 		while (!el.parent().is('html')) {
 			hierarchy.unshift([
 				el.get(0).nodeName.toLowerCase()
-				, el.parent().children(el.get(0).tagName.toLowerCase()).index(el)
+				, el.sameKindIndex() + inc
 			]);
 			el = el.parent();
 		}
 		selector = 'body';
 		$.each(hierarchy, function(index, value) {
-			selector += ' > '+value[0]+':eq('+value[1]+')';
+			selector += ' / '+value[0]+'['+value[1]+']';
 		});
+		if ('xpath' == lang)
+			selector = selector.replace('#text', 'text()');
 		return selector;
 	};
 
