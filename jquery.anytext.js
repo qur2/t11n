@@ -1,35 +1,9 @@
-// TODO keep the array hierarchy in a property
-
-// function domPath(el) {
-// 	hierarchy = new Array();
-// 	while (!el.parent().is('html')) {
-// 		hierarchy.unshift([
-// 			el.get(0).tagName.toLowerCase()
-// 			, el.parent().children(el.get(0).tagName.toLowerCase()).index(el)
-// 		]);
-// 		el = el.parent();
-// 	}
-// 	selector = 'body';
-// 	$.each(hierarchy, function(index, value) {
-// 		selector += ' > '+value[0]+':eq('+value[1]+')';
-// 	});
-// 	return selector;
-// }
-
-// jQuery(document).bind('click', function(e) {
-// 	console.log($(e.target));
-// 	console.log(domPath($(e.target)));
-// 	console.log($(domPath($(e.target))));
-// 	return false;
-// });
-
-/*!
- * jQuery domPath
+/**
+ * jQuery anyText plugin.
  * 
- * Copyright (c) 2010 "qur2" Aurélien Scoubeau
+ * Copyright (c) 2011 "qur2" Aurélien Scoubeau
  * Dual licensed under the MIT and GPL licenses.
  */
-
 (function($) {
 
 	$.fn.hasText = function() {
