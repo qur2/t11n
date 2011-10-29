@@ -155,20 +155,27 @@
 		},
 
 		updateNode: function() {
+			if (!this.currentNode) return;
 			text = domElem.find('.edit').val();
 			if ($.trim(this.currentNode[0].nodeValue) == $.trim(text)) return;
 			// if (text.charAt(0).match(/\w/))
 			// 	text = ' ' + text;
 			// if (text.charAt(text.length-1).match(/\w/))
 			// 	text = text + ' ';
-			this.currentNode.data('old', this.currentNode[0].nodeValue);
+			if (!this.currentNode.data('old'))
+				this.currentNode.data('old', this.currentNode[0].nodeValue);
 			this.currentNode[0].nodeValue = text;
+			this.currentNode.data('anyText', true);
 		},
 
 		restoreNode: function() {
+			if (!this.currentNode) return;
 			text = this.currentNode.data('old');
-			if (text)
+			if (text) {
 				this.currentNode[0].nodeValue = text;
+				this.currentNode.removeData('anyText');
+			}
+		},
 		},
 
 		build: function() {
