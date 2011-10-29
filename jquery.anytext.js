@@ -174,16 +174,19 @@
 		build: function() {
 			self = this;
 			domElem = $('<div>').attr('id', 'anyText-panel')
+				.append($('<span class="active on">').text('active').bind('click', function() {self.toggleActive();}))
+				.append($('<span class="toggle">').text('show/hide').bind('click', function() {self.toggle();}))
+				.append($('<div class="anyText-inner">').hide()
+					.append($('<span class="node-count">').text('-'))
+					.append($('<a class="node-prev">').text('prev').bind('click', function() {self.prevNode();}))
+					.append($('<span class="node-current">').text('-'))
+					.append($('<a class="node-next">').text('next').bind('click', function() {self.nextNode();}))
+					.append($('<textarea class="edit">').val('Pick a text node to load it.'))
+					.append($('<a class="update">').text('update').click(function() {self.updateNode();}))
+					.append($('<a class="restore">').text('restore').click(function() {self.restoreNode();}))
+					.append($('<a class="save">').text('save').click(function() {self.saveNodes();}))
+				)
 				.appendTo('body')
-				.append($('<span class="node-count">').text('-'))
-				.append($('<a class="node-prev">').text('prev').bind('click', function() {self.prevNode();}))
-				.append($('<span class="node-current">').text('-'))
-				.append($('<a class="node-next">').text('next').bind('click', function() {self.nextNode();}))
-				.append($('<span class="active on">').text('on').bind('click', function() {self.toggleActive();}))
-				.append($('<span class="toggle">').text('hide').bind('click', function() {self.hide();}))
-				.append($('<textarea class="edit">').val('Pick a text node to load it.'))
-				.append($('<a class="update">').text('update').click(function() {self.updateNode();}))
-				.append($('<a class="restore">').text('restore').click(function() {self.restoreNode();}))
 			;
 		}
 	};
