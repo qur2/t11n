@@ -32,9 +32,17 @@
 			: el.parent().children(el.get(0).tagName.toLowerCase()).index(el);
 	}
 	
+	/**
+	 * Returns true if the node has at least one child node that's a text node, false otherwise.
+	 */
 	$.fn.hasText = function() {
 		return $(this).getText().length;
 	};
+
+	/**
+	 * Returns the node children that are text nodes.
+	 * Empty text nodes can be ignored.
+	 */
 	$.fn.getText = function(options) {
 		var opts = $.extend({}, $.fn.getText.defaults, options);
 		textNodes = [];
@@ -43,7 +51,7 @@
 		// console.log('childNodes: ', node.childNodes);
 		for (p in node.childNodes) {
 			// console.log(p, node.childNodes[p]);
-			if (node.childNodes[p] && node.childNodes[p].nodeType == 3) {
+			if (node.childNodes[p] && 3 == node.childNodes[p].nodeType) {
 				if (opts.emptyNodes || $.trim(node.childNodes[p].nodeValue).length > 0)
 					textNodes.push(node.childNodes[p]);
 			}
@@ -51,12 +59,14 @@
 		// console.log('textNodes: ', textNodes);
 		return $(textNodes);
 	}
-
-	// plugin defaults
 	$.fn.getText.defaults = {
 		emptyNodes : false
 	};
 
+	/**
+	 * Build a panel to control the text modification process and
+	 * bind a global click handler to the target dom element.
+	 */
 	$.fn.anyText = function(options) {
 		// build main options before element iteration by extending the default ones
 		var opts = $.extend({}, $.fn.anyText.defaults, options);
@@ -76,10 +86,7 @@
 			});
 		});
 	};
-
-	// plugin defaults
 	$.fn.anyText.defaults = {
-		sideNoteToggleText : 'Side note:'
 	};
 	$.fn.anyText.active = true;
 
