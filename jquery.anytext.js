@@ -69,8 +69,8 @@
 			$(this).bind('click', function(e) {
 				if ($.fn.anyText.active) {
 					var textnodes = $(e.target).getText();
-					panel.setTextnodes(textnodes);
 					panel.show();
+					panel.setTextnodes(textnodes);
 					return false;
 				}
 			});
@@ -113,26 +113,26 @@
 		},
 
 		toggle: function() {
-			if (this.domElem.is(':visible'))
-				this.show();
-			else
+			if (domElem.find('.anyText-inner').is(':visible'))
 				this.hide();
+			else
+				this.show();
 		},
 
 		show: function() {
-			domElem.show();
+			domElem.find('.anyText-inner').show();
 		},
 
 		hide: function() {
-			domElem.hide();
+			domElem.find('.anyText-inner').hide();
 		},
 
 		toggleActive: function() {
 			$.fn.anyText.active = !$.fn.anyText.active;
 			if ($.fn.anyText.active)
-				domElem.find('.active').removeClass('off').addClass('on').text('on');
+				domElem.find('.active').removeClass('off').addClass('on');
 			else
-				domElem.find('.active').removeClass('on').addClass('off').text('off');
+				domElem.find('.active').removeClass('on').addClass('off');
 		},
 
 		changeNode: function(inc) {
@@ -141,7 +141,7 @@
 				this.currentNodeIndex = this.nodes.length + this.currentNodeIndex;
 			this.currentNode = this.nodes.eq(this.currentNodeIndex);
 			text = this.currentNode.text();
-			domElem.find('.edit').val(text.replace(/\s+/gi,' '));
+			domElem.find('.edit').val(text.replace(/\s+/gi,' ')).focus().get(0).select();
 			text = this.currentNode.length ? this.currentNodeIndex+1 : '-';
 			domElem.find('.node-current').text(text);
 		},
