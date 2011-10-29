@@ -5,7 +5,33 @@
  * Dual licensed under the MIT and GPL licenses.
  */
 (function($) {
-
+	/**
+	 * Returns the text node index, relative to its tet node siblings.
+	 */
+	$.fn.textIndex = function() {
+		i = -1;
+		node = this[0];
+		siblings = node.parentNode.childNodes;
+		for (n in siblings) {
+			if (siblings[n] && 3 == siblings[n].nodeType) {
+				// if (node.length) i++;
+				if (siblings[n].length == node.length && siblings[n].nodeValue == node.nodeValue)
+					return i;
+			}
+		}
+		return i;
+	};
+	
+	/**
+	 * Returns the node index, relative to its sibling having the same node name.
+	 */
+	$.fn.sameKindIndex = function() {
+		el = $(this);
+		return 3 == el.get(0).nodeType
+			? el.textIndex()
+			: el.parent().children(el.get(0).tagName.toLowerCase()).index(el);
+	}
+	
 	$.fn.hasText = function() {
 		return $(this).getText().length;
 	};
