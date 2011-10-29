@@ -180,6 +180,14 @@
 				this.currentNode.removeData('anyText');
 			}
 		},
+
+		saveNodes: function() {
+			modifiedNodes = $('body *').contents().filter(function() {
+				return this.nodeType == 3 && $(this).data('anyText');
+			}).each(function() {
+				console.log(domPath($(this)));
+			});
+			console.log(modifiedNodes);
 		},
 
 		build: function() {
