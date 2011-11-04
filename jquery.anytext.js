@@ -147,6 +147,7 @@
 		},
 
 		changeNode: function(inc) {
+			if (!this.nodes) return;
 			this.currentNodeIndex = (this.currentNodeIndex + inc % this.nodes.length) % this.nodes.length;
 			if (this.currentNodeIndex < 0)
 				this.currentNodeIndex = this.nodes.length + this.currentNodeIndex;
