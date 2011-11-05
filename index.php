@@ -130,6 +130,25 @@ $app->post('/transform/:name', function($name) use ($app) {
 	foreach ($mods as $mod)
 		$mod->save();
 	Model::commit();
+
+$app->get('/upload', function() use ($app) {
+	$app->render('upload.php', array(
+		'action' => $app->request()->getRootUri() . $app->request()->getResourceUri(),
+	));
+});
+
+$app->post('/upload', function() use ($app) {
+	require('./lib/FileUpload.php');
+	$fu = new FileUpload('userfile');
+	$location = $fu->move(DomDoc::$repo);
+	// $zip = new ZipArchive;
+	// if ($zip->open($location) === TRUE) {
+	// 	$zip->extractTo('/my/destination/dir/');
+	// 	$zip->close();
+	// 	echo 'ok';
+	// } else {
+	// 	echo 'failed';
+	// }
 });
 
 $app->run();
