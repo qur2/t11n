@@ -9,12 +9,28 @@ require_once 'lib/models.php';
 DomDoc::$repo = 'data/';
 
 $app = new Slim(array(
-	'log.enable' => true,
-	'log.path' => './logs',
-	'log.level' => 4,
+	'mode' => 'dev',
 	'view' => 'MustacheView',
 	'templates.path' => './templates',
 ));
+
+// prod mode definition
+$app->configureMode('prod', function() use ($app) {
+	$app->config(array(
+		'log.enable' => true,
+		'log.path' => './logs',
+		'log.level' => 4,
+		'debug' => false
+	));
+});
+
+// dev mode definition
+$app->configureMode('dev', function() use ($app) {
+	$app->config(array(
+		'log.enable' => false,
+		'debug' => true
+	));
+});
 
 $app->get('/', function() use ($app) {
 	$domdoc = Model::factory('DomDoc')->find_one('cv.html');
