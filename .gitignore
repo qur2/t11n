@@ -1,1 +1,3 @@
+data/*
+!data/t11n.sql
 logs/*.*
