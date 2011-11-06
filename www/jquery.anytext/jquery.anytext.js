@@ -14,7 +14,7 @@
 		siblings = node.parentNode.childNodes;
 		for (n in siblings) {
 			if (siblings[n] && 3 == siblings[n].nodeType) {
-				// if (node.length) i++;
+				if (node.length) i++;
 				if (siblings[n].length == node.length && siblings[n].nodeValue == node.nodeValue)
 					return i;
 			}
