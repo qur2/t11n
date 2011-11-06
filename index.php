@@ -41,6 +41,11 @@ $app->get('/', function() use ($app) {
 	));
 });
 
+/**
+ * Loads a document, applies the modifications and output it.
+ * @param string $name The name of the document to load.
+ * @todo render a cached version of the modified document.
+ */
 $app->get('/page/:name', function($name) use ($app) {
 	$domdoc = Model::factory('DomDoc')->find_one($name);
 	if (!$domdoc->loaded())
@@ -50,6 +55,81 @@ $app->get('/page/:name', function($name) use ($app) {
 		->alter($mods)
 		->sanitizeAssets($app->request()->getRootUri() . '/')
 		->getAlteredContent();
+});
+
+/**
+ * Loads the original page and inject anyText plugin + its dependencies.
+ * @param string $name The name of the document to load.
+ * @todo loads existent mods and init javascript to keep track of the original doc.
+ * @todo add feature to make the selector used by anyText flexible.
+ */
+$app->get('/transform/:name', function($name) use ($app) {
+	$domdoc = Model::factory('DomDoc')->find_one($name);
+	if (!$domdoc->loaded())
+		$app->notFound();
+	// $mods = Model::factory('Mod')->where('dom_doc_name', $name)->find_many();
+	require_once 'lib/DomInjector.php';
+	$basePath = $app->request()->getRootUri();
+	$doc = $domdoc->sanitizeAssets($app->request()->getRootUri() . '/')->newDom;
+	$di = new DomInjector($doc);
+	$di->append(array(
+		'tag' => 'script',
+		'type' => 'text/javascript',
+		'src' => 'https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js',
+	));
+	$di->append(array(
+		'tag' => 'script',
+		'type' => 'text/javascript',
+		'src' => $basePath . '/www/jquery.anytext/jquery.anytext.js',
+	));
+	$di->append(array(
+		'tag' => 'link',
+		'type' => 'text/css',
+		'rel' => 'stylesheet/less',
+		'href' => $basePath . '/www/jquery.anytext/jquery.anytext.less',
+	));
+	$di->append(array(
+		'tag' => 'script',
+		'type' => 'text/javascript',
+		'src' => 'http://lesscss.googlecode.com/files/less-1.1.3.min.js',
+	));
+	$di->append(array(
+		'tag' => 'script',
+		'type' => 'text/javascript',
+		'value' => "$(document).ready(function() { $('#container').anyText(); });",
+	), 'body');
+	echo $doc->saveHTML();
+});
+
+/**
+ * Saves the posted modifications of a document.
+ * @param string $name The name of the document being modified.
+ * @todo Send an explicit response (so messages can be displayed client side).
+ * @todo generate a plain version of the document integrating the modifications.
+ */
+$app->post('/transform/:name', function($name) use ($app) {
+	$domdoc = Model::factory('DomDoc')->find_one($name);
+	if (!$domdoc->loaded())
+		$app->notFound();
+	$postedMods = $app->request()->post('mods');
+	
+	$mods = array();
+	foreach ($postedMods as $postedMod) {
+		$mod = Model::factory('Mod');
+		$mod->xpath = $postedMod['selector'];
+		$mod->value = $postedMod['value'];
+		$mod->mod_type_id = 1;
+		$mod->dom_doc_name = $name;
+		$mods[] = $mod;
+	}
+	
+	Model::start_transaction();
+	$person = ORM::for_table('mod')
+		->where_equal('dom_doc_name', $name)
+		->delete_many();
+	foreach ($mods as $mod)
+		$mod->save();
+	Model::commit();
 });
 
 $app->run();

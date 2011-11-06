@@ -14,7 +14,7 @@
 		siblings = node.parentNode.childNodes;
 		for (n in siblings) {
 			if (siblings[n] && 3 == siblings[n].nodeType) {
-				// if (node.length) i++;
+				if (node.length) i++;
 				if (siblings[n].length == node.length && siblings[n].nodeValue == node.nodeValue)
 					return i;
 			}
@@ -117,6 +117,7 @@
 		currentNodeIndex: 0,
 
 		setTextnodes: function(textnodes) {
+			if (!textnodes.length) return;
 			this.nodes = textnodes;
 			domElem.find('.node-count').text(this.nodes.length);
 			this.currentNodeIndex = -1;
@@ -190,12 +191,18 @@
 		},
 
 		saveNodes: function() {
+			post = [];
 			modifiedNodes = $('body *').contents().filter(function() {
 				return this.nodeType == 3 && $(this).data('anyText');
 			}).each(function() {
-				console.log(domPath($(this)));
+				node = this;
+				post.push({
+					selector : domPath($(node)),
+					value : node.nodeValue
+				})
 			});
-			console.log(modifiedNodes);
+			if (post.length)
+				$.post(window.url, {mods: post});
 		},
 
 		build: function() {
