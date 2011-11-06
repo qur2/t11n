@@ -190,12 +190,17 @@
 		},
 
 		saveNodes: function() {
+			post = [];
 			modifiedNodes = $('body *').contents().filter(function() {
 				return this.nodeType == 3 && $(this).data('anyText');
 			}).each(function() {
-				console.log(domPath($(this)));
+				node = this;
+				post.push({
+					selector : domPath($(node)),
+					value : node.nodeValue
+				})
 			});
-			console.log(modifiedNodes);
+			$.post(window.url, {mods: post});
 		},
 
 		build: function() {
