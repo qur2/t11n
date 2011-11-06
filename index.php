@@ -95,4 +95,29 @@ $app->get('/transform/:name', function($name) use ($app) {
 	echo $doc->saveHTML();
 });
 
+$app->post('/transform/:name', function($name) use ($app) {
+	$domdoc = Model::factory('DomDoc')->find_one($name);
+	if (!$domdoc->loaded())
+		$app->notFound();
+	$postedMods = $app->request()->post('mods');
+	
+	$mods = array();
+	foreach ($postedMods as $postedMod) {
+		$mod = Model::factory('Mod');
+		$mod->xpath = $postedMod['selector'];
+		$mod->value = $postedMod['value'];
+		$mod->mod_type_id = 1;
+		$mod->dom_doc_name = $name;
+		$mods[] = $mod;
+	}
+	
+	Model::start_transaction();
+	$person = ORM::for_table('mod')
+		->where_equal('dom_doc_name', $name)
+		->delete_many();
+	foreach ($mods as $mod)
+		$mod->save();
+	Model::commit();
+});
+
 $app->run();
