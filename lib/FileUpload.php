@@ -25,7 +25,8 @@ class FileUpload {
 
 	public function isUploaded() {
 		if (!is_uploaded_file($this->entry->tmp_name)) {
-			$this->entry->error = 'illegal';
+			if (!$this->entry->error)
+				$this->entry->error = 'illegal';
 			throw new RuntimeException($this->getErrorMessage());
 		}
 		return 0 === $this->entry->error;
