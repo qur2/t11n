@@ -117,6 +117,7 @@
 		currentNodeIndex: 0,
 
 		setTextnodes: function(textnodes) {
+			if (!textnodes.length) return;
 			this.nodes = textnodes;
 			domElem.find('.node-count').text(this.nodes.length);
 			this.currentNodeIndex = -1;
@@ -200,7 +201,8 @@
 					value : node.nodeValue
 				})
 			});
-			$.post(window.url, {mods: post});
+			if (post.length)
+				$.post(window.url, {mods: post});
 		},
 
 		build: function() {
