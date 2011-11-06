@@ -130,6 +130,7 @@ $app->post('/transform/:name', function($name) use ($app) {
 	foreach ($mods as $mod)
 		$mod->save();
 	Model::commit();
+});
 
 $app->get('/upload', function() use ($app) {
 	$app->render('upload.php', array(
