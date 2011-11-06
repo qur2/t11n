@@ -48,6 +48,8 @@ class DomDoc extends Model {
 	}
 
 	public function sanitizeAssets($path) {
+		if (!isset($this->newDom))
+			$this->alter(array());
 		// build xpath selector for element having a url to correct
 		$urlAttributes = array('src', 'href');
 		$selector = array_map(function($attr) { return "//*[@{$attr}]"; }, $urlAttributes);
