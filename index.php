@@ -52,4 +52,47 @@ $app->get('/page/:name', function($name) use ($app) {
 		->getAlteredContent();
 });
 
+/**
+ * Loads the original page and inject anyText plugin + its dependencies.
+ * TODO loads existent mods and init javascript to keep track of the original doc.
+ * TODO add feature to make the selector used by anyText flexible.
+ */
+$app->get('/transform/:name', function($name) use ($app) {
+	$domdoc = Model::factory('DomDoc')->find_one($name);
+	if (!$domdoc->loaded())
+		$app->notFound();
+	// $mods = Model::factory('Mod')->where('dom_doc_name', $name)->find_many();
+	require_once 'lib/DomInjector.php';
+	$basePath = $app->request()->getRootUri();
+	$doc = $domdoc->sanitizeAssets($app->request()->getRootUri() . '/')->newDom;
+	$di = new DomInjector($doc);
+	$di->append(array(
+		'tag' => 'script',
+		'type' => 'text/javascript',
+		'src' => 'https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js',
+	));
+	$di->append(array(
+		'tag' => 'script',
+		'type' => 'text/javascript',
+		'src' => $basePath . '/www/jquery.anytext/jquery.anytext.js',
+	));
+	$di->append(array(
+		'tag' => 'link',
+		'type' => 'text/css',
+		'rel' => 'stylesheet/less',
+		'href' => $basePath . '/www/jquery.anytext/jquery.anytext.less',
+	));
+	$di->append(array(
+		'tag' => 'script',
+		'type' => 'text/javascript',
+		'src' => 'http://lesscss.googlecode.com/files/less-1.1.3.min.js',
+	));
+	$di->append(array(
+		'tag' => 'script',
+		'type' => 'text/javascript',
+		'value' => "$(document).ready(function() { $('#container').anyText(); });",
+	), 'body');
+	echo $doc->saveHTML();
+});
+
 $app->run();
