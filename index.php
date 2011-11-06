@@ -133,7 +133,9 @@ $app->post('/transform/:name', function($name) use ($app) {
 });
 
 $app->get('/upload', function() use ($app) {
+	$basePath = $app->request()->getRootUri();
 	$app->render('upload.php', array(
+		'basePath' => $basePath,
 		'action' => $app->request()->getRootUri() . $app->request()->getResourceUri(),
 	));
 });
@@ -142,14 +144,23 @@ $app->post('/upload', function() use ($app) {
 	require('./lib/FileUpload.php');
 	$fu = new FileUpload('userfile');
 	$location = $fu->move(DomDoc::$repo);
-	// $zip = new ZipArchive;
-	// if ($zip->open($location) === TRUE) {
-	// 	$zip->extractTo('/my/destination/dir/');
-	// 	$zip->close();
-	// 	echo 'ok';
-	// } else {
-	// 	echo 'failed';
-	// }
+	$zip = new ZipArchive;
+	if ($zip->open($location) === TRUE) {
+		$destination = substr($location, 0, strrpos($location, '.'));
+		$zip->extractTo($destination);
+		$zip->close();
+		unlink($location);
+		$tooFar = $destination . '/' . substr($fu->getName(), 0, strrpos($fu->getName(), '.'));
+		print_r(array($destination, $tooFar));
+		if (is_dir($tooFar)) {
+			exec("mv {$tooFar}/* $destination");
+			exec("rm {$tooFar}/*");
+			exec("rm {$tooFar}");
+		}
+		echo 'ok';
+	} else {
+		echo 'failed';
+	}
 });
 
 $app->run();
