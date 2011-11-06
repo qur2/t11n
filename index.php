@@ -132,7 +132,11 @@ $app->post('/transform/:name', function($name) use ($app) {
 	Model::commit();
 });
 
+/**
+ * Loads the file upload page.
+ */
 $app->get('/upload', function() use ($app) {
+	$app->flash('upload', 'nichon');
 	$basePath = $app->request()->getRootUri();
 	$app->render('upload.php', array(
 		'basePath' => $basePath,
@@ -140,26 +144,39 @@ $app->get('/upload', function() use ($app) {
 	));
 });
 
+/**
+ * Handles the file post query.
+ * @todo check for dir name collisions (in progress).
+ * @todo check what file type is in the uploaded zip.
+ */
 $app->post('/upload', function() use ($app) {
 	require('./lib/FileUpload.php');
 	$fu = new FileUpload('userfile');
-	$location = $fu->move(DomDoc::$repo);
-	$zip = new ZipArchive;
-	if ($zip->open($location) === TRUE) {
+	try {
+		$location = $fu->move(DomDoc::$repo);
 		$destination = substr($location, 0, strrpos($location, '.'));
-		$zip->extractTo($destination);
-		$zip->close();
-		unlink($location);
-		$tooFar = $destination . '/' . substr($fu->getName(), 0, strrpos($fu->getName(), '.'));
-		print_r(array($destination, $tooFar));
-		if (is_dir($tooFar)) {
-			exec("mv {$tooFar}/* $destination");
-			exec("rm {$tooFar}/*");
-			exec("rm {$tooFar}");
+		if (file_exists($destination)) {
+			$app->flash('upload', sprintf('Directory already exists : %s', $destination));
+			$app->redirect($app->request()->getRootUri() . '/upload');
 		}
-		echo 'ok';
-	} else {
-		echo 'failed';
+		$zip = new ZipArchive;
+		if (true !== $zip->open($location)) {
+			$app->flash('upload', sprintf('Archive could not be extracted : %s', $fu->getName()));
+			$app->redirect($app->request()->getRootUri() . '/upload');
+		} else {
+			$zip->extractTo($destination);
+			$zip->close();
+			unlink($location);
+			$tooFar = $destination . '/' . substr($fu->getName(), 0, strrpos($fu->getName(), '.'));
+			if (is_dir($tooFar)) {
+				exec("mv {$tooFar}/* $destination");
+				exec("rm {$tooFar}/*");
+				exec("rm {$tooFar}");
+			}
+		}
+	} catch (RuntimeException $e) {
+		$app->flash('upload', $e->getMessage());
+		$app->redirect($app->request()->getRootUri() . '/upload');
 	}
 });
 
