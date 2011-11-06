@@ -41,6 +41,11 @@ $app->get('/', function() use ($app) {
 	));
 });
 
+/**
+ * Loads a document, applies the modifications and output it.
+ * @param string $name The name of the document to load.
+ * @todo render a cached version of the modified document.
+ */
 $app->get('/page/:name', function($name) use ($app) {
 	$domdoc = Model::factory('DomDoc')->find_one($name);
 	if (!$domdoc->loaded())
@@ -54,8 +59,9 @@ $app->get('/page/:name', function($name) use ($app) {
 
 /**
  * Loads the original page and inject anyText plugin + its dependencies.
- * TODO loads existent mods and init javascript to keep track of the original doc.
- * TODO add feature to make the selector used by anyText flexible.
+ * @param string $name The name of the document to load.
+ * @todo loads existent mods and init javascript to keep track of the original doc.
+ * @todo add feature to make the selector used by anyText flexible.
  */
 $app->get('/transform/:name', function($name) use ($app) {
 	$domdoc = Model::factory('DomDoc')->find_one($name);
@@ -95,6 +101,12 @@ $app->get('/transform/:name', function($name) use ($app) {
 	echo $doc->saveHTML();
 });
 
+/**
+ * Saves the posted modifications of a document.
+ * @param string $name The name of the document being modified.
+ * @todo Send an explicit response (so messages can be displayed client side).
+ * @todo generate a plain version of the document integrating the modifications.
+ */
 $app->post('/transform/:name', function($name) use ($app) {
 	$domdoc = Model::factory('DomDoc')->find_one($name);
 	if (!$domdoc->loaded())
