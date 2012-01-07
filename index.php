@@ -159,21 +159,9 @@ $app->post('/upload', function() use ($app) {
 			$app->flash('upload', sprintf('Directory already exists : %s', $destination));
 			$app->redirect($app->request()->getRootUri() . '/upload');
 		}
-		$zip = new ZipArchive;
-		if (true !== $zip->open($location)) {
-			$app->flash('upload', sprintf('Archive could not be extracted : %s', $fu->getName()));
-			$app->redirect($app->request()->getRootUri() . '/upload');
-		} else {
-			$zip->extractTo($destination);
-			$zip->close();
-			unlink($location);
-			$tooFar = $destination . '/' . substr($fu->getName(), 0, strrpos($fu->getName(), '.'));
-			if (is_dir($tooFar)) {
-				exec("mv {$tooFar}/* $destination");
-				exec("rm {$tooFar}/*");
-				exec("rm {$tooFar}");
-			}
-		}
+		$domDoc = new DomDoc;
+		$domDoc->dir->buildFromZip($location, $destination);
+		unlink($location);
 	} catch (RuntimeException $e) {
 		$app->flash('upload', $e->getMessage());
 		$app->redirect($app->request()->getRootUri() . '/upload');
