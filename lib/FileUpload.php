@@ -16,6 +16,7 @@ class FileUpload {
 		'illegal' => 'Entry is illegal : %s',
 	);
 
+
 	public function __construct($name, &$files = null) {
 		if (is_null($files)) $files = &$_FILES;
 		$this->name = $name;
