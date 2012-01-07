@@ -20,8 +20,8 @@ class DomDocDir {
 	}
 
 	/**
-	 * Setter for the $path attribute. It also set a $name attribute,
-	 * which the $path base name.
+	 * Setter for the $path attribute. It also sets a $name attribute,
+	 * which is the $path base name.
 	 * @param string $path The path of the directory.
 	 */
 	private function setPath($path) {
@@ -61,7 +61,7 @@ class DomDocDir {
 	}
 
 	/**
-	 * Checks if a file has the same name (without extension) that the directory base name.
+	 * Checks if a file has the same name (without extension) than the directory base name.
 	 * If not, it searches for a file of a given extension and renames it.
 	 * @param string $ext The file extension to use for renaming.
 	 * @return boolean A boolean telling if the renaming was successful or not.
@@ -74,7 +74,7 @@ class DomDocDir {
 	}
 
 	/**
-	 * Extracts a zip to a given destination and consolidates the directory.
+	 * Extracts a zip in a given destination and consolidates the directory.
 	 * @param string $location The zip location.
 	 * @param string $destination The directory path where the zip is extracted.
 	 */
