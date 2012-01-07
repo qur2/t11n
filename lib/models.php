@@ -1,7 +1,28 @@
 <?php
+require_once('DomDocDir.php');
+
 class DomDoc extends Model {
 	public static $_id_column = 'name';
 	public static $repo;
+
+	public $dir;
+
+
+	public function create($data = array()) {
+		parent::create($data);
+		$dir = ($this->loaded() && $this->name)
+			? self::$repo . substr($this->name, 0, strrpos($this->name, '.')) . DIRECTORY_SEPARATOR
+			: false
+		;
+		$this->dir = new DomDocDir($dir);
+		return $this;
+	}
+
+	public function save() {
+		if (!$this->created)
+			$this->created = date('Y-m-d H:i:s');
+		return parent::save();
+	}
 
 	public function alter($mods) {
 		$doc = $this->loadContent();
@@ -35,12 +56,8 @@ class DomDoc extends Model {
 		return $doc;
 	}
 
-	private function getSubRepo() {
-		return self::$repo . substr($this->name, 0, strrpos($this->name, '.')) . DIRECTORY_SEPARATOR;
-	}
-
 	public function getContent() {
-		return file_get_contents($this->getSubRepo() . $this->name);
+		return file_get_contents($this->dir->getPath() . $this->name);
 	}
 
 	public function getAlteredContent() {
@@ -56,7 +73,7 @@ class DomDoc extends Model {
 
 		$xpath = new DOMXpath($this->newDom);
 		$elements = $xpath->query(join(' | ', $selector));
-		$path .= $this->getSubRepo();
+		$path .= $this->dir->getPath();
 
 		// correct the urls on the fly
 		if (!is_null($elements)) {
@@ -73,6 +90,7 @@ class DomDoc extends Model {
 		return $this;
 	}
 }
+
 
 class Mod extends Model {
 }
