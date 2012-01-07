@@ -132,4 +132,42 @@ $app->post('/transform/:name', function($name) use ($app) {
 	Model::commit();
 });
 
+/**
+ * Loads the file upload page.
+ */
+$app->get('/upload', function() use ($app) {
+	$app->flash('upload', 'nichon');
+	$basePath = $app->request()->getRootUri();
+	$app->render('upload.php', array(
+		'basePath' => $basePath,
+		'action' => $app->request()->getRootUri() . $app->request()->getResourceUri(),
+	));
+});
+
+/**
+ * Handles the file post query.
+ * @todo check for dir name collisions (in progress).
+ * @todo check what file type is in the uploaded zip.
+ */
+$app->post('/upload', function() use ($app) {
+	require('./lib/FileUpload.php');
+	$fu = new FileUpload('userfile');
+	try {
+		$location = $fu->move(DomDoc::$repo);
+		$destination = substr($location, 0, strrpos($location, '.'));
+		if (file_exists($destination)) {
+			$app->flash('upload', sprintf('Directory already exists : %s', $destination));
+			$app->redirect($app->request()->getRootUri() . '/upload');
+		}
+		$domDoc = new DomDoc;
+		$domDoc->dir->buildFromZip($location, $destination);
+		unlink($location);
+		$domDoc->name = $domDoc->dir->name . '.html';
+		$domDoc->save();
+	} catch (RuntimeException $e) {
+		$app->flash('upload', $e->getMessage());
+		$app->redirect($app->request()->getRootUri() . '/upload');
+	}
+});
+
 $app->run();
