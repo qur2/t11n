@@ -162,6 +162,8 @@ $app->post('/upload', function() use ($app) {
 		$domDoc = new DomDoc;
 		$domDoc->dir->buildFromZip($location, $destination);
 		unlink($location);
+		$domDoc->name = $domDoc->dir->name . '.html';
+		$domDoc->save();
 	} catch (RuntimeException $e) {
 		$app->flash('upload', $e->getMessage());
 		$app->redirect($app->request()->getRootUri() . '/upload');
