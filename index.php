@@ -136,7 +136,6 @@ $app->post('/transform/:name', function($name) use ($app) {
  * Loads the file upload page.
  */
 $app->get('/upload', function() use ($app) {
-	$app->flash('upload', 'nichon');
 	$basePath = $app->request()->getRootUri();
 	$app->render('upload.php', array(
 		'basePath' => $basePath,
@@ -156,16 +155,19 @@ $app->post('/upload', function() use ($app) {
 		$location = $fu->move(DomDoc::$repo);
 		$destination = substr($location, 0, strrpos($location, '.'));
 		if (file_exists($destination)) {
-			$app->flash('upload', sprintf('Directory already exists : %s', $destination));
+			$app->flash('fail', sprintf('Directory already exists : %s', $destination));
 			$app->redirect($app->request()->getRootUri() . '/upload');
 		}
 		$domDoc = new DomDoc;
 		$domDoc->dir->buildFromZip($location, $destination);
 		unlink($location);
 		$domDoc->name = $domDoc->dir->name . '.html';
-		$domDoc->save();
+		if ($domDoc->save()) {
+			$app->flash('succeed', sprintf('Document successfully  uploaded : %s', $destination));
+			$app->redirect($app->request()->getRootUri() . '/page/' . $domDoc->name);
+		}
 	} catch (RuntimeException $e) {
-		$app->flash('upload', $e->getMessage());
+		$app->flash('fail', $e->getMessage());
 		$app->redirect($app->request()->getRootUri() . '/upload');
 	}
 });
