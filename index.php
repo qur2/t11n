@@ -5,8 +5,11 @@ MustacheView::$mustacheDirectory = 'vendor/mustache/';
 require_once 'vendor/idiorm/idiorm.php';
 require_once 'vendor/dakota/dakota.php';
 ORM::configure('sqlite:data/t11n.sqlite');
-require_once 'lib/models.php';
-DomDoc::$repo = 'data/';
+require_once 'lib/Repo.php';
+require_once 'lib/DomDoc.php';
+require_once 'lib/ModSet.php';
+require_once 'lib/Mod.php';
+Repo::$root = 'data/';
 
 $app = new Slim(array(
 	'mode' => 'dev',
