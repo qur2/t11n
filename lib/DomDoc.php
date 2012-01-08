@@ -1,6 +1,4 @@
 <?php
-require_once('DomDocDir.php');
-
 /**
  * DomDoc class. Represents an HTML file stored in DB with its directory.
  * The directory contains the original file and its assets. This class is used
@@ -8,9 +6,6 @@ require_once('DomDocDir.php');
  * @todo Refactor getters to be more coherent for DomDoc, DOMDocument and HTML return values.
  */
 class DomDoc extends Model {
-	public static $repo;
-
-	public $dir;
 	private $dom = array('original' => false, 'altered' => false);
 
 
@@ -24,34 +19,6 @@ class DomDoc extends Model {
 
 	public function modSets() {
 		return $this->has_many('ModSet');
-	}
-
-	/**
-	 * Sets an empty dir on creation.
-	 * Overriden method.
-	 * @param $data The record attributes.
-	 * @return DomDoc $this.
-	 */
-	public function create($data = array()) {
-		parent::create($data);
-		$this->dir = new DomDocDir(false);
-		return $this;
-	}
-
-	/**
-	 * Sets the directory on record attribute population.
-	 * Overriden method.
-	 * @param $data The record attributes.
-	 * @return DomDoc $this.
-	 */
-	public function hydrate($data = array()) {
-		parent::hydrate($data);
-		$dir = $this->name
-			? Repo::$root . substr($this->name, 0, strrpos($this->name, '.')) . DIRECTORY_SEPARATOR
-			: false
-		;
-		$this->dir = new DomDocDir($dir);
-		return $this;
 	}
 
 	/**
@@ -98,7 +65,8 @@ class DomDoc extends Model {
 	 * @todo Handle $encoding in a dynamic way, by guessing the encoding of the file.
 	 */
 	private function loadContent($encoding = 'UTF-8') {
-		$content = file_get_contents($this->dir->getPath() . $this->name);
+		$repo = $this->repo()->find_one();
+		$content = file_get_contents($repo->dir->getPath() . $this->name);
 		$doc = new DOMDocument('1.0', $encoding);
 		$doc->preserveWhiteSpace = false;
 		if ('UTF-8' == $encoding) {
@@ -143,7 +111,8 @@ class DomDoc extends Model {
 
 		$xpath = new DOMXpath($dom);
 		$elements = $xpath->query(join(' | ', $selector));
-		$path .= $this->dir->getPath();
+		$repo = $this->repo()->find_one();
+		$path .= $repo->dir->getPath();
 
 		// correct the urls on the fly
 		if (!is_null($elements)) {
@@ -158,5 +127,25 @@ class DomDoc extends Model {
 			}
 		}
 		return $this;
+	}
+
+	public static function buildFromRepoFiles($data) {
+		if (!isset($data['repo_name']))
+			throw new RuntimeException('Missing primary key to create or update a new repo');
+		$domDocs = array_filter($data, function($el) {
+			return is_object($el) && 'DomDoc' == get_class($el);
+		});
+		$repo = Model::factory('Repo')->find_one($data['repo_name']);
+
+		Model::start_transaction();
+		if (!$repo->loaded()) {
+			$repo->name = $data['repo_name'];
+			$repo->save();
+		}
+		foreach ($domDocs as $domDoc) {
+			$domDoc->repo_name = $repo->name;
+			$domDoc->save();
+		}
+		Model::commit();
 	}
 }

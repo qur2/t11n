@@ -51,8 +51,8 @@ $app->get('/', function() use ($app) {
  * @param string $modSet The id of the modification set to apply to the document.
  * @todo render a cached version of the modified document.
  */
-$app->get('/page/:repo/:domDoc/:modSet', function($repo, $domDoc, $modSet) use ($app) {
-	$domDoc = Model::factory('DomDoc')->where('repo_name', $repo)->find_one($domDoc);
+$app->get('/page/:repo/:domDoc(/:modSet)', function($repo, $domDoc, $modSet = null) use ($app) {
+	$domDoc = Model::factory('DomDoc')->where('repo_name', $repo)->where('name', $domDoc)->find_one();
 	if (!$domDoc->loaded())
 		$app->notFound();
 	print $domDoc->alter($modSet, $app->request()->getRootUri() . '/')->getContent();
@@ -130,7 +130,7 @@ $app->post('/transform/:repo/:domDoc(/:modSet)', function($repo, $domDoc, $modSe
 /**
  * Loads the file upload page.
  */
-$app->get('/upload', function() use ($app) {
+$app->get('/repo', function() use ($app) {
 	$basePath = $app->request()->getRootUri();
 	$app->render('upload.php', array(
 		'basePath' => $basePath,
@@ -143,27 +143,28 @@ $app->get('/upload', function() use ($app) {
  * @todo check for dir name collisions (in progress).
  * @todo check what file type is in the uploaded zip.
  */
-$app->post('/upload', function() use ($app) {
+$app->post('/repo', function() use ($app) {
 	require('./lib/FileUpload.php');
 	$fu = new FileUpload('userfile');
 	try {
-		$location = $fu->move(DomDoc::$repo);
+		$location = $fu->move(Repo::$root);
 		$destination = substr($location, 0, strrpos($location, '.')) . DIRECTORY_SEPARATOR;
-		if (file_exists($destination)) {
-			$app->flash('fail', sprintf('Directory already exists : %s', $destination));
-			$app->redirect($app->request()->getRootUri() . '/upload');
-		}
-		$domDoc = new DomDoc;
-		$domDoc->dir->buildFromZip($location, $destination);
+		$repo = new Repo;
+		$files = $repo->dir->buildFromZip($location, $destination);
 		unlink($location);
-		$domDoc->name = $domDoc->dir->name . '.html';
-		if ($domDoc->save()) {
-			$app->flash('succeed', sprintf('Document successfully  uploaded : %s', $destination));
-			$app->redirect($app->request()->getRootUri() . '/page/' . $domDoc->name);
+		$data = array();
+		foreach ($files as $file) {
+			$domDoc = Model::factory('DomDoc');
+			$domDoc->name = $file;
+			$data[] = $domDoc;
 		}
+		$data['repo_name'] = $repo->dir->name;
+		DomDoc::buildFromRepoFiles($data);
+		$app->flash('succeed', sprintf('Repo successfully  created : %s', $destination));
+		$app->redirect(join('/', array($app->request()->getRootUri(), 'page', $domDoc->repo_name, $domDoc->name)));
 	} catch (RuntimeException $e) {
 		$app->flash('fail', $e->getMessage());
-		$app->redirect($app->request()->getRootUri() . '/upload');
+		$app->redirect($app->request()->getRootUri() . '/repo');
 	}
 });
 

@@ -10,7 +10,7 @@ class ModSet extends Model {
 
 	public static function buildFromMods($data = array()) {
 		if (!isset($data['mod_set_id']) && !isset($data['dom_doc_id']))
-			throw new RuntimeException('Missing primary or foreign key to create a new mod set')
+			throw new RuntimeException('Missing primary or foreign key to create a new mod set');
 		$mods = array_filter($data, function($el) {
 			return is_object($el) && 'Mod' == get_class($el);
 		});

@@ -5,7 +5,7 @@
  * The assets have to be included using relative paths.
  * @todo handle multiple HTML files in the same directory.
  */
-class DomDocDir {
+class RepoDir {
 	/**
 	 * The resource path.
 	 */
@@ -60,17 +60,8 @@ class DomDocDir {
 		}
 	}
 
-	/**
-	 * Checks if a file has the same name (without extension) than the directory base name.
-	 * If not, it searches for a file of a given extension and renames it.
-	 * @param string $ext The file extension to use for renaming.
-	 * @return boolean A boolean telling if the renaming was successful or not.
-	 * @todo Delete this method to handle multiple HTML files as it will become useless.
-	 */
-	private function makeRoot($ext = 'html') {
-		$file = glob($this->path . '*.' . $ext);
-		$file = reset($file);
-		return rename($file, $this->path . $this->name . '.' . $ext);
+	private function findDocs($ext) {
+		return glob($this->path . '*.' . $ext);
 	}
 
 	/**
@@ -78,7 +69,9 @@ class DomDocDir {
 	 * @param string $location The zip location.
 	 * @param string $destination The directory path where the zip is extracted.
 	 */
-	public function buildFromZip($location, $destination) {
+	public function buildFromZip($location, $destination, $ext = 'html') {
+		if (file_exists($destination))
+			throw new RuntimeException(sprintf('Unzip failed because directory already exists : %s', $destination));
 		$zip = new ZipArchive;
 		if (true !== $zip->open($location)) {
 			return false;
@@ -87,7 +80,8 @@ class DomDocDir {
 			$zip->extractTo($destination);
 			$zip->close();
 			$this->moveBackUp();
-			$this->makeRoot();
+			$files = $this->findDocs($ext);
+			return array_map('basename', $files);
 		}
 	}
 }
