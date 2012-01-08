@@ -128,4 +128,24 @@ class DomDoc extends Model {
 		}
 		return $this;
 	}
+
+	public static function buildFromRepoFiles($data) {
+		if (!isset($data['repo_name']))
+			throw new RuntimeException('Missing primary key to create or update a new repo');
+		$domDocs = array_filter($data, function($el) {
+			return is_object($el) && 'DomDoc' == get_class($el);
+		});
+		$repo = Model::factory('Repo')->find_one($data['repo_name']);
+
+		Model::start_transaction();
+		if (!$repo->loaded()) {
+			$repo->name = $data['repo_name'];
+			$repo->save();
+		}
+		foreach ($domDocs as $domDoc) {
+			$domDoc->repo_name = $repo->name;
+			$domDoc->save();
+		}
+		Model::commit();
+	}
 }
