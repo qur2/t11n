@@ -144,7 +144,3 @@ class DomDoc extends Model {
 		return $this;
 	}
 }
-
-
-class Mod extends Model {
-}
