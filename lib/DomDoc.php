@@ -71,9 +71,13 @@ class DomDoc extends Model {
 	 * @param array $mods An array of Mod.
 	 * @return DomDoc $this.
 	 */
-	public function alter($mods) {
-		$doc = $this->loadContent();
-		$xpath = new DOMXpath($doc);
+	public function alter($modSetId = null, $path = null) {
+		$mods = is_null($modSetId)
+			? array()
+			: $this->modSet($modSetId)->find_one()->mods()->find_many()
+		;
+		$dom = $this->loadContent();
+		$xpath = new DOMXpath($dom);
 		foreach ($mods as $mod) {
 			$elems = $xpath->query($mod->xpath);
 			if (!is_null($elems)) {
@@ -82,7 +86,8 @@ class DomDoc extends Model {
 				}
 			}
 		}
-		$this->newDom = $doc;
+		$this->sanitizeAssets($dom, $path);
+		$this->dom['altered'] = $dom;
 		return $this;
 	}
 
@@ -92,8 +97,8 @@ class DomDoc extends Model {
 	 * @return DOMDocument The document loaded into a DOMDocument.
 	 * @todo Handle $encoding in a dynamic way, by guessing the encoding of the file.
 	 */
-	public function loadContent($encoding = 'UTF-8') {
-		$content = $this->getContent();
+	private function loadContent($encoding = 'UTF-8') {
+		$content = file_get_contents($this->dir->getPath() . $this->name);
 		$doc = new DOMDocument('1.0', $encoding);
 		$doc->preserveWhiteSpace = false;
 		if ('UTF-8' == $encoding) {
@@ -113,16 +118,17 @@ class DomDoc extends Model {
 	 * Reads the file content.
 	 * @return mixed A string containing the file content or false if an error occurred.
 	 */
-	public function getContent() {
-		return file_get_contents($this->dir->getPath() . $this->name);
+	public function getContent($original = false) {
+		return $this->getDom($original)->saveHTML();
 	}
 
-	/**
-	 * Getter for the altered DOMDocument HTML.
-	 * @return string The altered DOMDocument.
-	 */
-	public function getAlteredContent() {
-		return $this->newDom->saveHTML();
+	public function getDom($original = false) {
+		if ($original || empty($this->dom['altered'])) {
+			if (empty($this->dom['original']))
+				$this->dom['original'] = $this->loadContent();
+			return $this->dom['original'];
+		}
+		return $this->dom['altered'];
 	}
 
 	/**
@@ -130,14 +136,12 @@ class DomDoc extends Model {
 	 * @param string $path The path to prepend to the attributes.
 	 * @return DomDoc $this.
 	 */
-	public function sanitizeAssets($path) {
-		if (!isset($this->newDom))
-			$this->alter(array());
+	public function sanitizeAssets(&$dom, $path) {
 		// build xpath selector for element having a url to correct
 		$urlAttributes = array('src', 'href');
 		$selector = array_map(function($attr) { return "//*[@{$attr}]"; }, $urlAttributes);
 
-		$xpath = new DOMXpath($this->newDom);
+		$xpath = new DOMXpath($dom);
 		$elements = $xpath->query(join(' | ', $selector));
 		$path .= $this->dir->getPath();
 
