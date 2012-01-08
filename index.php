@@ -51,8 +51,8 @@ $app->get('/', function() use ($app) {
  * @param string $modSet The id of the modification set to apply to the document.
  * @todo render a cached version of the modified document.
  */
-$app->get('/page/:repo/:domDoc/:modSet', function($repo, $domDoc, $modSet) use ($app) {
-	$domDoc = Model::factory('DomDoc')->where('repo_name', $repo)->find_one($domDoc);
+$app->get('/page/:repo/:domDoc(/:modSet)', function($repo, $domDoc, $modSet = null) use ($app) {
+	$domDoc = Model::factory('DomDoc')->where('repo_name', $repo)->where('name', $domDoc)->find_one();
 	if (!$domDoc->loaded())
 		$app->notFound();
 	print $domDoc->alter($modSet, $app->request()->getRootUri() . '/')->getContent();
