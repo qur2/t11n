@@ -3,5 +3,6 @@ T11n stands for translation.
 This is a tool developed to easily translate HTML static pages.
 
 == Features (most recent first)
+* **2012-01-08** Upload of zipped documents
 * **2012-01-08** Creation of a new document version is functional
 * **2011-10-28** Functional frontend part (at least on FF)
