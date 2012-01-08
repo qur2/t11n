@@ -153,7 +153,7 @@ $app->post('/upload', function() use ($app) {
 	$fu = new FileUpload('userfile');
 	try {
 		$location = $fu->move(DomDoc::$repo);
-		$destination = substr($location, 0, strrpos($location, '.'));
+		$destination = substr($location, 0, strrpos($location, '.')) . DIRECTORY_SEPARATOR;
 		if (file_exists($destination)) {
 			$app->flash('fail', sprintf('Directory already exists : %s', $destination));
 			$app->redirect($app->request()->getRootUri() . '/upload');
