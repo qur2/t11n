@@ -64,14 +64,13 @@ $app->get('/page/:repo/:domDoc/:modSet', function($repo, $domDoc, $modSet) use (
  * @todo loads existent mods and init javascript to keep track of the original doc.
  * @todo add feature to make the selector used by anyText flexible.
  */
-$app->get('/transform/:name', function($name) use ($app) {
-	$domdoc = Model::factory('DomDoc')->find_one($name);
-	if (!$domdoc->loaded())
+$app->get('/transform/:repo/:domDoc', function($repo, $domDoc) use ($app) {
+	$domDoc = Model::factory('DomDoc')->where('repo_name', $repo)->find_one($domDoc);
+	if (!$domDoc->loaded())
 		$app->notFound();
-	// $mods = Model::factory('Mod')->where('dom_doc_name', $name)->find_many();
 	require_once 'lib/DomInjector.php';
 	$basePath = $app->request()->getRootUri();
-	$doc = $domdoc->sanitizeAssets($app->request()->getRootUri() . '/')->newDom;
+	$doc = $domDoc->alter(null, $app->request()->getRootUri() . '/')->getDom();
 	$di = new DomInjector($doc);
 	$di->append(array(
 		'tag' => 'script',
