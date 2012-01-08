@@ -8,11 +8,23 @@ require_once('DomDocDir.php');
  * @todo Refactor getters to be more coherent for DomDoc, DOMDocument and HTML return values.
  */
 class DomDoc extends Model {
-	public static $_id_column = 'name';
 	public static $repo;
 
 	public $dir;
+	private $dom = array('original' => false, 'altered' => false);
 
+
+	public function repo() {
+		return $this->belongs_to('Repo', 'repo_name');
+	}
+
+	public function modSet($modSetId) {
+		return $this->has_many('ModSet')->where('id', $modSetId);
+	}
+
+	public function modSets() {
+		return $this->has_many('ModSet');
+	}
 
 	/**
 	 * Sets an empty dir on creation.
@@ -35,7 +47,7 @@ class DomDoc extends Model {
 	public function hydrate($data = array()) {
 		parent::hydrate($data);
 		$dir = $this->name
-			? self::$repo . substr($this->name, 0, strrpos($this->name, '.')) . DIRECTORY_SEPARATOR
+			? Repo::$root . substr($this->name, 0, strrpos($this->name, '.')) . DIRECTORY_SEPARATOR
 			: false
 		;
 		$this->dir = new DomDocDir($dir);
