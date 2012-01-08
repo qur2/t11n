@@ -64,7 +64,7 @@ $app->get('/page/:repo/:domDoc/:modSet', function($repo, $domDoc, $modSet) use (
  * @todo loads existent mods and init javascript to keep track of the original doc.
  * @todo add feature to make the selector used by anyText flexible.
  */
-$app->get('/transform/:repo/:domDoc', function($repo, $domDoc) use ($app) {
+$app->get('/transform/:repo/:domDoc(/:modSet)', function($repo, $domDoc, $modSet = null) use ($app) {
 	$domDoc = Model::factory('DomDoc')->where('repo_name', $repo)->find_one($domDoc);
 	if (!$domDoc->loaded())
 		$app->notFound();
@@ -107,29 +107,24 @@ $app->get('/transform/:repo/:domDoc', function($repo, $domDoc) use ($app) {
  * @todo Send an explicit response (so messages can be displayed client side).
  * @todo generate a plain version of the document integrating the modifications.
  */
-$app->post('/transform/:name', function($name) use ($app) {
-	$domdoc = Model::factory('DomDoc')->find_one($name);
+$app->post('/transform/:repo/:domDoc(/:modSet)', function($repo, $domDoc, $modSet = null) use ($app) {
+	$domdoc = Model::factory('DomDoc')->where('repo_name', $repo)->find_one($domDoc);
 	if (!$domdoc->loaded())
 		$app->notFound();
 	$postedMods = $app->request()->post('mods');
-	
-	$mods = array();
+	$data = array();
 	foreach ($postedMods as $postedMod) {
 		$mod = Model::factory('Mod');
 		$mod->xpath = $postedMod['selector'];
 		$mod->value = $postedMod['value'];
 		$mod->mod_type_id = 1;
-		$mod->dom_doc_name = $name;
-		$mods[] = $mod;
+		$data[] = $mod;
 	}
-	
-	Model::start_transaction();
-	$person = ORM::for_table('mod')
-		->where_equal('dom_doc_name', $name)
-		->delete_many();
-	foreach ($mods as $mod)
-		$mod->save();
-	Model::commit();
+	if (is_null($modSet))
+		$data['dom_doc_id'] = $domDoc;
+	else
+		$data['mod_set_id'] = $modSet;
+	ModSet::buildFromMods($data);
 });
 
 /**
