@@ -25,7 +25,7 @@ class DomDocDir {
 	 * @param string $path The path of the directory.
 	 */
 	private function setPath($path) {
-		$this->path = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+		$this->path = $path;
 		$this->name = false;
 		if ($path) {
 			$this->name = basename($path);
