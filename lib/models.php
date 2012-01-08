@@ -1,6 +1,12 @@
 <?php
 require_once('DomDocDir.php');
 
+/**
+ * DomDoc class. Represents an HTML file stored in DB with its directory.
+ * The directory contains the original file and its assets. This class is used
+ * to load the file and to apply transformation on its DOM.
+ * @todo Refactor getters to be more coherent for DomDoc, DOMDocument and HTML return values.
+ */
 class DomDoc extends Model {
 	public static $_id_column = 'name';
 	public static $repo;
@@ -8,12 +14,24 @@ class DomDoc extends Model {
 	public $dir;
 
 
+	/**
+	 * Sets an empty dir on creation.
+	 * Overriden method.
+	 * @param $data The record attributes.
+	 * @return DomDoc $this.
+	 */
 	public function create($data = array()) {
 		parent::create($data);
 		$this->dir = new DomDocDir(false);
 		return $this;
 	}
 
+	/**
+	 * Sets the directory on record attribute population.
+	 * Overriden method.
+	 * @param $data The record attributes.
+	 * @return DomDoc $this.
+	 */
 	public function hydrate($data = array()) {
 		parent::hydrate($data);
 		$dir = $this->name
@@ -24,12 +42,23 @@ class DomDoc extends Model {
 		return $this;
 	}
 
+	/**
+	 * Sets the creation date just before save.
+	 * Overriden method.
+	 * @return DomDoc $this.
+	 */
 	public function save() {
 		if (!$this->created)
 			$this->created = date('Y-m-d H:i:s');
 		return parent::save();
 	}
 
+	
+	/**
+	 * Applies transformations to the document.
+	 * @param array $mods An array of Mod.
+	 * @return DomDoc $this.
+	 */
 	public function alter($mods) {
 		$doc = $this->loadContent();
 		$xpath = new DOMXpath($doc);
@@ -45,6 +74,12 @@ class DomDoc extends Model {
 		return $this;
 	}
 
+	/**
+	 * Loads the document content.
+	 * @param string $encoding The encoding used when reading the document.
+	 * @return DOMDocument The document loaded into a DOMDocument.
+	 * @todo Handle $encoding in a dynamic way, by guessing the encoding of the file.
+	 */
 	public function loadContent($encoding = 'UTF-8') {
 		$content = $this->getContent();
 		$doc = new DOMDocument('1.0', $encoding);
@@ -62,14 +97,27 @@ class DomDoc extends Model {
 		return $doc;
 	}
 
+	/**
+	 * Reads the file content.
+	 * @return mixed A string containing the file content or false if an error occurred.
+	 */
 	public function getContent() {
 		return file_get_contents($this->dir->getPath() . $this->name);
 	}
 
+	/**
+	 * Getter for the altered DOMDocument HTML.
+	 * @return string The altered DOMDocument.
+	 */
 	public function getAlteredContent() {
 		return $this->newDom->saveHTML();
 	}
 
+	/**
+	 * Sanitizes the document assets by correcting URI-related attributes on the fy.
+	 * @param string $path The path to prepend to the attributes.
+	 * @return DomDoc $this.
+	 */
 	public function sanitizeAssets($path) {
 		if (!isset($this->newDom))
 			$this->alter(array());
