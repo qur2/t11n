@@ -44,6 +44,7 @@ class FileUpload {
 	}
 
 	public function getErrorMessage() {
+		if (4 === $this->entry->error) $this->name = '<no file>';
 		return sprintf($this->messages[$this->entry->error], $this->name);
 	}
 
