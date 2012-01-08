@@ -5,8 +5,11 @@ MustacheView::$mustacheDirectory = 'vendor/mustache/';
 require_once 'vendor/idiorm/idiorm.php';
 require_once 'vendor/dakota/dakota.php';
 ORM::configure('sqlite:data/t11n.sqlite');
-require_once 'lib/models.php';
-DomDoc::$repo = 'data/';
+require_once 'lib/Repo.php';
+require_once 'lib/DomDoc.php';
+require_once 'lib/ModSet.php';
+require_once 'lib/Mod.php';
+Repo::$root = 'data/';
 
 $app = new Slim(array(
 	'mode' => 'dev',
@@ -42,19 +45,17 @@ $app->get('/', function() use ($app) {
 });
 
 /**
- * Loads a document, applies the modifications and output it.
- * @param string $name The name of the document to load.
+ * Loads a document, applies a set of modifications and outputs it.
+ * @param string $repo The name of the repo where the document lies.
+ * @param string $domDoc The name of the document to load.
+ * @param string $modSet The id of the modification set to apply to the document.
  * @todo render a cached version of the modified document.
  */
-$app->get('/page/:name', function($name) use ($app) {
-	$domdoc = Model::factory('DomDoc')->find_one($name);
-	if (!$domdoc->loaded())
+$app->get('/page/:repo/:domDoc/:modSet', function($repo, $domDoc, $modSet) use ($app) {
+	$domDoc = Model::factory('DomDoc')->where('repo_name', $repo)->find_one($domDoc);
+	if (!$domDoc->loaded())
 		$app->notFound();
-	$mods = Model::factory('Mod')->where('dom_doc_name', $name)->find_many();
-	print $domdoc
-		->alter($mods)
-		->sanitizeAssets($app->request()->getRootUri() . '/')
-		->getAlteredContent();
+	print $domDoc->alter($modSet, $app->request()->getRootUri() . '/')->getContent();
 });
 
 /**
@@ -63,14 +64,13 @@ $app->get('/page/:name', function($name) use ($app) {
  * @todo loads existent mods and init javascript to keep track of the original doc.
  * @todo add feature to make the selector used by anyText flexible.
  */
-$app->get('/transform/:name', function($name) use ($app) {
-	$domdoc = Model::factory('DomDoc')->find_one($name);
-	if (!$domdoc->loaded())
+$app->get('/transform/:repo/:domDoc(/:modSet)', function($repo, $domDoc, $modSet = null) use ($app) {
+	$domDoc = Model::factory('DomDoc')->where('repo_name', $repo)->find_one($domDoc);
+	if (!$domDoc->loaded())
 		$app->notFound();
-	// $mods = Model::factory('Mod')->where('dom_doc_name', $name)->find_many();
 	require_once 'lib/DomInjector.php';
 	$basePath = $app->request()->getRootUri();
-	$doc = $domdoc->sanitizeAssets($app->request()->getRootUri() . '/')->newDom;
+	$doc = $domDoc->alter(null, $app->request()->getRootUri() . '/')->getDom();
 	$di = new DomInjector($doc);
 	$di->append(array(
 		'tag' => 'script',
@@ -107,29 +107,24 @@ $app->get('/transform/:name', function($name) use ($app) {
  * @todo Send an explicit response (so messages can be displayed client side).
  * @todo generate a plain version of the document integrating the modifications.
  */
-$app->post('/transform/:name', function($name) use ($app) {
-	$domdoc = Model::factory('DomDoc')->find_one($name);
+$app->post('/transform/:repo/:domDoc(/:modSet)', function($repo, $domDoc, $modSet = null) use ($app) {
+	$domdoc = Model::factory('DomDoc')->where('repo_name', $repo)->find_one($domDoc);
 	if (!$domdoc->loaded())
 		$app->notFound();
 	$postedMods = $app->request()->post('mods');
-	
-	$mods = array();
+	$data = array();
 	foreach ($postedMods as $postedMod) {
 		$mod = Model::factory('Mod');
 		$mod->xpath = $postedMod['selector'];
 		$mod->value = $postedMod['value'];
 		$mod->mod_type_id = 1;
-		$mod->dom_doc_name = $name;
-		$mods[] = $mod;
+		$data[] = $mod;
 	}
-	
-	Model::start_transaction();
-	$person = ORM::for_table('mod')
-		->where_equal('dom_doc_name', $name)
-		->delete_many();
-	foreach ($mods as $mod)
-		$mod->save();
-	Model::commit();
+	if (is_null($modSet))
+		$data['dom_doc_id'] = $domDoc;
+	else
+		$data['mod_set_id'] = $modSet;
+	ModSet::buildFromMods($data);
 });
 
 /**
