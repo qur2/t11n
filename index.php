@@ -45,19 +45,17 @@ $app->get('/', function() use ($app) {
 });
 
 /**
- * Loads a document, applies the modifications and output it.
- * @param string $name The name of the document to load.
+ * Loads a document, applies a set of modifications and outputs it.
+ * @param string $repo The name of the repo where the document lies.
+ * @param string $domDoc The name of the document to load.
+ * @param string $modSet The id of the modification set to apply to the document.
  * @todo render a cached version of the modified document.
  */
-$app->get('/page/:name', function($name) use ($app) {
-	$domdoc = Model::factory('DomDoc')->find_one($name);
-	if (!$domdoc->loaded())
+$app->get('/page/:repo/:domDoc/:modSet', function($repo, $domDoc, $modSet) use ($app) {
+	$domDoc = Model::factory('DomDoc')->where('repo_name', $repo)->find_one($domDoc);
+	if (!$domDoc->loaded())
 		$app->notFound();
-	$mods = Model::factory('Mod')->where('dom_doc_name', $name)->find_many();
-	print $domdoc
-		->alter($mods)
-		->sanitizeAssets($app->request()->getRootUri() . '/')
-		->getAlteredContent();
+	print $domDoc->alter($modSet, $app->request()->getRootUri() . '/')->getContent();
 });
 
 /**
