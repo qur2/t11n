@@ -10,7 +10,13 @@ class DomDoc extends Model {
 
 	public function create($data = array()) {
 		parent::create($data);
-		$dir = ($this->loaded() && $this->name)
+		$this->dir = new DomDocDir(false);
+		return $this;
+	}
+
+	public function hydrate($data = array()) {
+		parent::hydrate($data);
+		$dir = $this->name
 			? self::$repo . substr($this->name, 0, strrpos($this->name, '.')) . DIRECTORY_SEPARATOR
 			: false
 		;
